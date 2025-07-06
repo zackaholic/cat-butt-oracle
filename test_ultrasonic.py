@@ -21,7 +21,7 @@ def main():
         
         # Test loop at 5Hz
         while True:
-            distance = sensor.get_distance()
+            distance = sensor.get_raw_reading()
             
             if distance is not None:
                 print(f"{distance:6.2f} inches")

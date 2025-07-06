@@ -27,8 +27,8 @@ class UltrasonicSensor:
     
     def __init__(
         self, 
-        trig_pin: int = 18, 
-        echo_pin: int = 24,
+        trig_pin: int = 14, 
+        echo_pin: int = 15,
         filter_size: int = 5,
         timeout: float = 0.1
     ):
@@ -36,8 +36,8 @@ class UltrasonicSensor:
         Initialize the ultrasonic sensor.
         
         Args:
-            trig_pin: GPIO pin for trigger signal (default: 18)
-            echo_pin: GPIO pin for echo signal (default: 24)
+            trig_pin: GPIO pin for trigger signal (default: 14)
+            echo_pin: GPIO pin for echo signal (default: 15)
             filter_size: Number of readings to average for filtering (default: 5)
             timeout: Maximum time to wait for echo response in seconds (default: 0.1)
         """
@@ -74,12 +74,12 @@ class UltrasonicSensor:
     def _initialize_filter(self):
         """Take several initial readings to populate the filter."""
         for _ in range(self.filter_size):
-            raw_distance = self._get_raw_distance()
+            raw_distance = self.get_raw_reading()
             if raw_distance is not None:
                 self.readings.append(raw_distance)
             time.sleep(0.05)  # Small delay between initial readings
             
-    def _get_raw_distance(self) -> Optional[float]:
+    def get_raw_reading(self) -> Optional[float]:
         """
         Get a single raw distance measurement.
         
@@ -133,7 +133,7 @@ class UltrasonicSensor:
         """
         with self._lock:
             # Get new raw reading
-            raw_distance = self._get_raw_distance()
+            raw_distance = self.get_raw_reading()
             
             if raw_distance is not None:
                 self.readings.append(raw_distance)
@@ -193,7 +193,7 @@ class UltrasonicSensor:
 
 
 # Convenience function for simple usage
-def create_sensor(trig_pin: int = 18, echo_pin: int = 24) -> UltrasonicSensor:
+def create_sensor(trig_pin: int = 14, echo_pin: int = 15) -> UltrasonicSensor:
     """
     Create a sensor with default settings.
     
@@ -254,8 +254,8 @@ HC-SR04 to Raspberry Pi Connections:
 HC-SR04 Pin    →    Raspberry Pi Pin
 VCC            →    5V (Pin 2 or 4)
 GND            →    Ground (Pin 6, 9, 14, 20, 25, 30, 34, or 39)
-TRIG           →    GPIO 18 (Pin 12) [configurable]
-ECHO           →    GPIO 24 (Pin 18) [configurable]
+TRIG           →    GPIO 14 (Pin 8) [configurable]
+ECHO           →    GPIO 15 (Pin 10) [configurable]
 
 Note: Some HC-SR04 modules work at 3.3V, but most need 5V for VCC.
 The ECHO pin outputs 5V but Raspberry Pi GPIO is 3.3V tolerant,
@@ -263,7 +263,7 @@ so direct connection is usually fine, but you can add a voltage
 divider if you want to be extra safe.
 
 Voltage Divider (optional for ECHO pin):
-ECHO → 1kΩ → GPIO24
+ECHO → 1kΩ → GPIO15
        └ 2kΩ → GND
        
 This creates a 3.3V signal from the 5V ECHO output.
