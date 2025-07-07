@@ -68,13 +68,16 @@ The installation presents cat tail movements as an oracle or contacted spirit. T
   - Real-time distance output for calibration
   - Proper GPIO cleanup and error handling
 
-### 🎯 CURRENT STATUS: Advanced Motion System Development
-The core infrastructure is complete and we're now building sophisticated, lifelike motion systems. Current capabilities:
+### ✅ COMPLETED: Coordinated Motion System 
+The core infrastructure is complete and we now have working coordinated motion! Current capabilities:
 - Precisely calibrate letter positions on any ouija board layout
 - Store and recall exact coordinates for each letter
-- **NEW**: Advanced tail speller with organic motion profiles
-- **NEW**: Ultrasonic sensor integration for presence detection
-- **NEW**: Message database with mood-based response categories
+- **COMPLETED**: Coordinated X/Y motion system with proper timing
+- **COMPLETED**: Time-based interpolation at 30Hz for smooth movement
+- **COMPLETED**: Special tap motion for repeated letters
+- **COMPLETED**: Ultrasonic sensor integration for presence detection
+- **COMPLETED**: Message database with mood-based response categories
+- **COMPLETED**: Raspberry Pi deployment and testing
 - Maintain sub-millimeter positioning accuracy
 - Handle complex board geometries with individual letter Y-coordinates
 
@@ -114,40 +117,37 @@ Interactive presence detection for art installation:
 - **GPIO Integration**: Thread-safe sensor reading compatible with FluidNC control
 - **Interaction Detection**: Configurable presence thresholds for triggering messages
 
-### Advanced Motion System (`tail_speller.py`)
-**🎯 CURRENT FOCUS**: Sophisticated, lifelike tail movement for spelling messages:
+### ✅ COMPLETED: Advanced Motion System (`tail_speller.py`)
+Successfully implemented coordinated motion system with natural-looking movement:
 
 #### Motion Philosophy
-Creating organic, cat-like movements that feel alive rather than robotic. The tail should move with the deliberate precision of a cat placing its paw, complete with natural variations and timing.
+Simple, coordinated X/Y movement that looks natural. X motion provides base timing while Y creates lifting behavior partway through the motion.
 
 #### Movement Architecture
-**Three-Phase Motion Sequence:**
-1. **Lift Phase**: Tail raises 4-6mm above board surface
-2. **Approach Phase**: Simultaneous X/Y movement with organic variations
-3. **Tap Phase**: Final 1-2mm with slight acceleration for cat-like "pounce"
+**Coordinated Motion Sequence:**
+1. **X Motion**: Constant velocity movement from start to target position
+2. **Y Timing**: Stays flat for first 25% of motion, lifts during next 37.5%, descends during final 37.5%
+3. **Repeat Letter Handling**: Special tap motion (Y-only lift and drop) for consecutive identical letters
 
-#### Lifelike Motion Features
-- **Waypoint Resolution**: 0.1mm spacing for ultra-smooth curves
-- **Y-Axis Randomness**: ±0.5mm variation during approach (journey varies, destination precise)
-- **Speed Coordination**: X-axis completes first, then Y accelerates for final tap
-- **Timing Variations**: Randomized acceleration profiles prevent robotic feel
-- **Precise Targeting**: Always hits exact letter coordinates despite organic approach
+#### Technical Implementation Details
+- **Time-Based Interpolation**: 30Hz position updates for smooth motion (configurable `STEP_RATE`)
+- **Coordinated Timing**: Y motion carefully timed to coordinate with X motion duration
+- **Repeat Detection**: Detects same-letter sequences and executes tap motion instead of full movement
+- **Smooth Motion**: High-frequency position updates eliminate jerky motion
+- **Configurable Speed**: Base timing controlled by `X_SPEED` parameter (200 mm/min)
 
-#### Technical Implementation
-- **Path Generation**: Linear interpolation with random Y offsets per waypoint
-- **Speed Profiles**: Variable feedrates (1200 mm/min lift, 800 approach, 1500 tap)
-- **Timing Control**: Configurable settle time (0.5s) and inter-letter pause (1.2s)
-- **Error Handling**: Graceful skipping of undefined letters with logging
+#### Motion Parameters
+- **Lift Height**: 4mm above board surface during transitions
+- **Update Rate**: 30Hz for smooth interpolation
+- **Settle Time**: 0.8s pause at each letter for dramatic effect
+- **Inter-Letter Pause**: 0.7s between letters
+- **Tap Motion**: 0.5s Y-only motion for repeated letters
 
-#### Future Motion Enhancements (Unexplored)
-- **Sine Wave Acceleration**: Replace linear speed changes with organic curves
-- **Hunting Behavior**: Slight position corrections/adjustments at target
-- **Emotional Speed Mapping**: Tie movement speed to message mood categories
-- **Approach Angle Variation**: Curved rather than linear approach paths
-- **Micro-Movements**: Subtle tail "twitches" while settled on letters
-- **Momentum Simulation**: Slight overshoot/correction for realistic physics
-- **Fatigue Modeling**: Gradually slower movements during long messages
-- **Attention Seeking**: Exaggerated movements when no one is detected
+#### 🎯 NEXT PHASE: Acceleration Curves
+Ready to implement simple acceleration profiles to make motion even more organic:
+- **Ease-in/Ease-out**: S-curve acceleration for more natural starts/stops
+- **Variable Lift Speed**: Different speeds for lift vs. descend phases
+- **Momentum Simulation**: Slight overshoot and correction behavior
 
 ### Message Database (`responses.json`)
 Mood-based response system with natural progression:
@@ -246,12 +246,12 @@ Raspberry Pi
 - `calibrate_ouija_letters.py` - Interactive X,Y letter position calibration tool
 - `test_ouija_letters.py` - Letter positioning test and validation system  
 - `smooth_tail_puppeteer.py` - Advanced real-time control for development/testing
-- `tail_speller.py` - **NEW**: Advanced lifelike message spelling system
+- `tail_speller.py` - **COMPLETED**: Coordinated motion message spelling system
 - `fluidnc/` - Complete FluidNC streaming library
 - `sensors/hc_sr04.py` - HC-SR04 ultrasonic sensor module with raw readings
 - `test_ultrasonic.py` - Ultrasonic sensor validation and testing script
-- `responses.json` - **NEW**: Mood-based message database
-- `ouija_letter_positions.json` - Calibrated letter coordinate database (generated)
+- `responses.json` - Mood-based message database
+- `ouija_letter_positions.json` - Calibrated letter coordinate database (simplified format)
 
 ### Reference Documentation  
 - `PROJECT_DESCRIPTION.md` - This document

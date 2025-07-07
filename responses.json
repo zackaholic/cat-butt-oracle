@@ -2,65 +2,11 @@
   "moods": {
     "welcoming": {
       "responses": [
-        "HELLO",
-        "GREETINGS", 
-        "WELCOME",
-        "MORNING",
-        "COFFEE TIME",
-        "AWAKE NOW",
-        "HERE I AM",
-        "NOTICE ME"
-      ]
-    },
-   
-    "dismissive": {
-      "responses": [
-        "GO AWAY",
-        "ENOUGH",
-        "LEAVE NOW",
-        "BORING",
-        "DONE HERE",
-        "SHOO",
-        "BEGONE",
-        "NOT TODAY",
-        "TIRED",
-        "NAP TIME"
-      ]
-    },
-   
-    "sleepy": {
-      "responses": [
-        "TIRED",
-        "SLEEPY",
-        "YAWN",
-        "LATER",
-        "DROWSY",
-        "RESTING",
-        "QUIET",
-        "SNOOZE",
-        "DREAMING",
-        "FIVE MORE"
-      ]
-    },
-    
-    "cryptic": {
-      "responses": [
-        "PERHAPS",
-        "MAYBE NOT",
-        "WHO KNOWS",
-        "UNCLEAR",
-        "DEPENDS",
-        "POSSIBLY",
-        "SOMETIME",
-        "IF LUCKY",
-        "ASK AGAIN",
-        "DOUBTFUL",
-        "SIGNS POINT",
-        "OUTLOOK DIM",
-        "VERY LIKELY",
-        "CANNOT SAY"
+        "HERO"
       ]
     }
+   }
+   }
   }
  ]
 }

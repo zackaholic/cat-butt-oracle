@@ -2,46 +2,38 @@
 """
 Tail Speller Module for Cat Butt Oracle
 
-Handles precise, lifelike tail movements to spell out messages on the ouija board.
-Uses sophisticated movement profiles with randomness to create organic, cat-like motion.
+Handles coordinated tail movements to spell out messages on the ouija board.
+Uses simple coordinated X/Y motion with lift timing.
 """
 
 import json
-import math
-import random
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Optional
 from fluidnc.connection import FluidNCConnection
-from fluidnc.streamer import GCodeStreamer
+from fluidnc.streamer import FluidNCStreamer
 
 
 class TailSpeller:
     """
     Manages tail movements for spelling messages on the ouija board.
     
-    Features:
-    - Loads letter coordinates from JSON file
-    - Generates smooth, lifelike movement paths
-    - Applies randomness for organic motion
-    - Precise letter targeting with dramatic timing
+    Simple coordinated motion:
+    - X moves at constant velocity
+    - Y lifts at 1/4 of X motion, then descends to arrive with X
     """
     
-    # Movement parameters - easily tunable
+    # Movement parameters
     HOME_X = 0.0
     HOME_Y = 0.0
-    LIFT_HEIGHT = 5.0  # mm to lift tail during moves
-    Y_RANDOMNESS = 0.5  # mm random variation in Y path
-    WAYPOINT_RESOLUTION = 0.1  # mm between waypoints
-    TAP_DISTANCE = 1.5  # mm before destination to accelerate
+    LIFT_HEIGHT = 4.0  # mm to lift tail during moves
     
     # Timing parameters
-    SETTLE_TIME = 0.5  # seconds to pause at each letter
-    LETTER_PAUSE = 1.2  # seconds between letters
+    SETTLE_TIME = 0.8  # seconds to pause at each letter
+    LETTER_PAUSE = 0.7  # seconds between letters
+    STEP_RATE = 30  # Hz - position updates per second
     
-    # Movement speeds (mm/min)
-    LIFT_SPEED = 1200
-    APPROACH_SPEED = 800
-    TAP_SPEED = 1500
+    # Movement speed
+    X_SPEED = 200  # mm/min for X motion (determines timing)
     
     def __init__(self, coordinates_file: str = "ouija_letter_positions.json"):
         """
@@ -73,28 +65,30 @@ class TailSpeller:
             print(f"Error loading coordinates: {e}")
             self.letter_positions = {}
     
-    def connect(self):
+    def connect(self, port: str = None):
         """Establish connection to FluidNC controller."""
         try:
-            self.fluidnc = FluidNCConnection()
-            self.fluidnc.connect()
-            self.streamer = GCodeStreamer(self.fluidnc)
-            print("Connected to FluidNC controller")
-            return True
+            self.streamer = FluidNCStreamer(port=port)
+            if self.streamer.connect():
+                print("Connected to FluidNC controller")
+                return True
+            else:
+                print("Failed to connect to FluidNC controller")
+                return False
         except Exception as e:
             print(f"Failed to connect to FluidNC: {e}")
             return False
     
     def disconnect(self):
         """Disconnect from FluidNC controller."""
-        if self.fluidnc:
-            self.fluidnc.disconnect()
+        if self.streamer:
+            self.streamer.disconnect()
             print("Disconnected from FluidNC")
     
     def go_home(self):
         """Move tail to home position."""
         print("Moving to home position...")
-        self._move_to_position(self.HOME_X, self.HOME_Y, speed=self.APPROACH_SPEED)
+        self._move_to_position(self.HOME_X, self.HOME_Y, speed=self.X_SPEED)
         self.current_x = self.HOME_X
         self.current_y = self.HOME_Y
     
@@ -135,7 +129,7 @@ class TailSpeller:
     
     def _move_to_letter(self, letter: str):
         """
-        Move tail to a specific letter using lifelike motion.
+        Move tail to a specific letter using simple coordinated motion.
         
         Args:
             letter: Letter to move to
@@ -146,8 +140,14 @@ class TailSpeller:
         target_x = self.letter_positions[letter]['x']
         target_y = self.letter_positions[letter]['y']
         
-        # Generate movement path with lift → approach → tap
-        self._execute_lifelike_movement(target_x, target_y)
+        # Check if we're already at this position (repeated letter)
+        if (abs(self.current_x - target_x) < 0.1 and 
+            abs(self.current_y - target_y) < 0.1):
+            print(f"    Tapping letter '{letter}' (repeat)")
+            self._execute_tap_motion()
+        else:
+            # Execute coordinated movement to new position
+            self._execute_coordinated_movement(target_x, target_y)
         
         # Update current position
         self.current_x = target_x
@@ -156,14 +156,11 @@ class TailSpeller:
         # Settle at the letter
         time.sleep(self.SETTLE_TIME)
     
-    def _execute_lifelike_movement(self, target_x: float, target_y: float):
+    def _execute_coordinated_movement(self, target_x: float, target_y: float):
         """
-        Execute a lifelike movement to target coordinates.
+        Execute coordinated X/Y movement using time-based interpolation.
         
-        Movement sequence:
-        1. Lift Y by LIFT_HEIGHT
-        2. Move X to target while lowering Y (with randomness)
-        3. X arrives first, then Y accelerates for final "tap"
+        Breaks movement into small steps with proper timing coordination.
         
         Args:
             target_x: Target X coordinate
@@ -172,71 +169,82 @@ class TailSpeller:
         start_x = self.current_x
         start_y = self.current_y
         
-        # Phase 1: Lift tail
-        lift_y = start_y + self.LIFT_HEIGHT
-        print(f"    Lifting to Y={lift_y:.2f}")
-        self._move_to_position(start_x, lift_y, speed=self.LIFT_SPEED)
+        # Calculate movement parameters
+        x_distance = abs(target_x - start_x)
+        total_time = (x_distance / self.X_SPEED) * 60  # Convert mm/min to seconds
         
-        # Phase 2: Generate approach path with randomness
-        path_points = self._generate_approach_path(
-            start_x, lift_y, target_x, target_y
-        )
+        print(f"    Moving from ({start_x:.2f}, {start_y:.2f}) to ({target_x:.2f}, {target_y:.2f})")
+        print(f"    X distance: {x_distance:.2f}mm, Total time: {total_time:.2f}s")
         
-        # Phase 3: Execute path with timing coordination
-        self._execute_path(path_points)
-    
-    def _generate_approach_path(self, start_x: float, start_y: float, 
-                              target_x: float, target_y: float) -> List[Tuple[float, float, float]]:
-        """
-        Generate waypoints for approach path with Y randomness.
+        if total_time < 0.2:  # Very short moves - just go direct
+            self._move_to_position(target_x, target_y, speed=self.X_SPEED)
+            return
         
-        Returns:
-            List of (x, y, speed) tuples for each waypoint
-        """
-        dx = target_x - start_x
-        dy = target_y - start_y
+        # Time-based interpolation with small steps
+        step_interval = 1.0 / self.STEP_RATE  # Time between updates
+        num_steps = int(total_time / step_interval)
         
-        # Calculate total distance and number of waypoints
-        total_distance = math.sqrt(dx**2 + dy**2)
-        num_waypoints = int(total_distance / self.WAYPOINT_RESOLUTION)
-        
-        if num_waypoints < 2:
-            num_waypoints = 2
-        
-        path_points = []
-        
-        for i in range(num_waypoints + 1):
-            # Linear interpolation for base path
-            t = i / num_waypoints
-            base_x = start_x + dx * t
-            base_y = start_y + dy * t
+        for step in range(num_steps + 1):
+            t = step / num_steps  # Progress from 0 to 1
+            elapsed_time = step * step_interval
             
-            # Add Y randomness (except at start and end)
-            if 0 < i < num_waypoints:
-                y_offset = random.uniform(-self.Y_RANDOMNESS, self.Y_RANDOMNESS)
-                actual_y = base_y + y_offset
+            # X position: linear interpolation
+            current_x = start_x + (target_x - start_x) * t
+            
+            # Y position: coordinated lift timing
+            if elapsed_time < (total_time * 0.25):
+                # Phase 1: Stay at start Y
+                current_y = start_y
+            elif elapsed_time < (total_time * 0.625):  # 1/4 to 5/8 of time
+                # Phase 2: Lift to LIFT_HEIGHT
+                lift_progress = (elapsed_time - total_time * 0.25) / (total_time * 0.375)
+                current_y = start_y + self.LIFT_HEIGHT * lift_progress
             else:
-                actual_y = base_y
+                # Phase 3: Descend to target
+                lift_y = start_y + self.LIFT_HEIGHT
+                descend_progress = (elapsed_time - total_time * 0.625) / (total_time * 0.375)
+                current_y = lift_y + (target_y - lift_y) * descend_progress
             
-            # Determine speed based on position in path
-            if i < num_waypoints * 0.8:  # Normal approach speed
-                speed = self.APPROACH_SPEED
-            else:  # Accelerate for final tap
-                speed = self.TAP_SPEED
+            # Send position update
+            self._move_to_position(current_x, current_y, speed=self.X_SPEED * 3)  # Higher speed for small moves
             
-            path_points.append((base_x, actual_y, speed))
-        
-        return path_points
+            # Wait for next step (except on last step)
+            if step < num_steps:
+                time.sleep(step_interval)
     
-    def _execute_path(self, path_points: List[Tuple[float, float, float]]):
+    def _execute_tap_motion(self):
         """
-        Execute a series of waypoints with appropriate timing.
+        Execute a simple tap motion for repeated letters.
+        Lifts Y up and brings it back down.
+        """
+        current_x = self.current_x
+        current_y = self.current_y
+        lift_y = current_y + self.LIFT_HEIGHT
         
-        Args:
-            path_points: List of (x, y, speed) waypoints
-        """
-        for x, y, speed in path_points:
-            self._move_to_position(x, y, speed=speed)
+        # Calculate timing for tap motion
+        tap_time = 0.5  # Total time for tap motion in seconds
+        step_interval = 1.0 / self.STEP_RATE
+        num_steps = int(tap_time / step_interval)
+        
+        for step in range(num_steps + 1):
+            t = step / num_steps  # Progress from 0 to 1
+            
+            # Y motion: up then down
+            if t <= 0.5:
+                # First half: lift up
+                progress = t * 2  # 0 to 1 over first half
+                y_pos = current_y + self.LIFT_HEIGHT * progress
+            else:
+                # Second half: bring down
+                progress = (t - 0.5) * 2  # 0 to 1 over second half
+                y_pos = lift_y - self.LIFT_HEIGHT * progress
+            
+            # Send position update (X stays constant)
+            self._move_to_position(current_x, y_pos, speed=self.X_SPEED * 2)
+            
+            # Wait for next step (except on last step)
+            if step < num_steps:
+                time.sleep(step_interval)
     
     def _move_to_position(self, x: float, y: float, speed: float):
         """
@@ -254,8 +262,7 @@ class TailSpeller:
         gcode = f"G1 X{x:.3f} Y{y:.3f} F{speed:.0f}"
         
         try:
-            self.streamer.send_line(gcode)
-            self.streamer.wait_for_completion()
+            self.streamer.send_command(gcode)
         except Exception as e:
             print(f"Error executing move: {e}")
 
@@ -270,7 +277,7 @@ def test_speller():
     
     try:
         # Test with a simple message
-        speller.spell_message("HELLO")
+        speller.spell_message("ROTTEN")
         
     except KeyboardInterrupt:
         print("\nTest interrupted by user")
