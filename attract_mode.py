@@ -27,8 +27,8 @@ class AttractMode:
     Y_MAX = 5.0       # mm, maximum Y peak
     
     # Timing parameters
-    SPEED_MIN = 3.0    # mm/s, minimum twitch speed
-    SPEED_MAX = 8.0    # mm/s, maximum twitch speed
+    SPEED_MIN = 4.0    # mm/s, minimum twitch speed
+    SPEED_MAX = 6.0    # mm/s, maximum twitch speed
     PEAK_TIME_MIN = 0.3  # fraction, earliest peak timing
     PEAK_TIME_MAX = 0.7  # fraction, latest peak timing
     CURVE_SHARPNESS_MIN = 0.8  # minimum S-curve steepness

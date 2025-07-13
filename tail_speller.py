@@ -32,7 +32,7 @@ class TailSpeller:
     # Timing parameters
     SETTLE_TIME = 0.8  # seconds to pause at each letter
     LETTER_PAUSE = 0.1  # seconds between letters
-    STEP_RATE = 50  # Hz - position updates per second
+    STEP_RATE = 80  # Hz - position updates per second
     
     # Movement speed
     X_SPEED = 500  # mm/min for X motion
@@ -138,8 +138,8 @@ class TailSpeller:
             if i < len(message) - 1:
                 time.sleep(self.LETTER_PAUSE)
         
-        print("Message complete, returning home")
-        self.go_home()
+        print("Message complete, spirit returning to rest...")
+        self._execute_exhausted_return_home()
     
     def _move_to_letter(self, letter: str):
         """
@@ -382,6 +382,61 @@ class TailSpeller:
             # Wait for next step (except on last step)
             if step < num_steps:
                 time.sleep(step_interval)
+    
+    def _execute_exhausted_return_home(self):
+        """
+        Execute a slow, exhausted return to home position.
+        
+        The spirit is tired after spelling the message and slowly settles back to rest.
+        Coordinated X and Y movement with dramatic deceleration - like energy fading away.
+        """
+        start_x = self.current_x
+        start_y = self.current_y
+        target_x = self.HOME_X  # 0.0
+        target_y = self.HOME_Y  # 0.0
+        
+        # Calculate total distance for timing
+        x_distance = abs(target_x - start_x)
+        y_distance = abs(target_y - start_y)
+        total_distance = (x_distance**2 + y_distance**2)**0.5  # Euclidean distance
+        
+        if total_distance < 0.1:  # Already at home
+            self.current_x = self.HOME_X
+            self.current_y = self.HOME_Y
+            return
+        
+        # Slower movement for exhausted spirit
+        exhausted_speed = 3.0  # mm/s - much slower than normal Y_MAX_SPEED (8.0)
+        total_time = total_distance / exhausted_speed
+        
+        print(f"    Exhausted return: ({start_x:.1f}, {start_y:.1f}) → ({target_x:.1f}, {target_y:.1f}) over {total_time:.1f}s")
+        
+        # Use high frequency for smooth deceleration
+        step_interval = 1.0 / self.STEP_RATE  # Same as normal movements
+        num_steps = int(total_time / step_interval)
+        
+        for step in range(num_steps + 1):
+            t = step / num_steps  # Progress from 0 to 1
+            
+            # Deceleration curve: start fast, end slow (inverse of acceleration)
+            # Use 1 - smoothstep to create deceleration effect
+            decel_progress = 1.0 - self._smoothstep(1.0 - t, 2.0)  # Higher power for more dramatic deceleration
+            
+            # Calculate current position with coordinated deceleration
+            current_x = start_x + (target_x - start_x) * decel_progress
+            current_y = start_y + (target_y - start_y) * decel_progress
+            
+            # Send position update
+            self._move_to_position(current_x, current_y, speed=self.X_SPEED)
+            
+            # Wait for next step (except on last step)
+            if step < num_steps:
+                time.sleep(step_interval)
+        
+        # Update position tracking
+        self.current_x = self.HOME_X
+        self.current_y = self.HOME_Y
+        print("    Spirit has settled to rest")
     
     def _move_to_position(self, x: float, y: float, speed: float):
         """

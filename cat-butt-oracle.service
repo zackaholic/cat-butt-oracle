@@ -1,0 +1,22 @@
+[Unit]
+Description=Cat Butt Oracle Interactive Art Installation
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=zack
+Group=zack
+WorkingDirectory=/home/zack/cat-butt-oracle
+Environment=PYTHONPATH=/home/zack/cat-butt-oracle
+ExecStart=/usr/bin/python3 /home/zack/cat-butt-oracle/main_controller.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Allow access to GPIO and serial ports
+SupplementaryGroups=gpio dialout
+
+[Install]
+WantedBy=multi-user.target

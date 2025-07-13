@@ -1,12 +1,31 @@
 {
   "moods": {
-    "welcoming": {
+    "neutral": {
       "responses": [
-        "HERO"
+        "HELLO",
+        "GREETINGS", 
+        "WELCOME",
+        "MORNING",
+        "COFFEE TIME",
+        "AWAKE NOW",
+        "HERE I AM",
+        "NOTICE ME"
+      ]
+    },
+   
+    "irritated": {
+      "responses": [
+        "GO AWAY",
+        "ENOUGH",
+        "LEAVE NOW",
+        "BORING",
+        "DONE HERE",
+        "SHOO",
+        "BEGONE",
+        "NOT TODAY",
+        "TIRED",
+        "NAP TIME"
       ]
     }
-   }
-   }
   }
- ]
 }
