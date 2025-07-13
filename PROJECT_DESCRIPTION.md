@@ -118,49 +118,82 @@ Interactive presence detection for art installation:
 - **Interaction Detection**: Configurable presence thresholds for triggering messages
 
 ### ✅ COMPLETED: Advanced Motion System (`tail_speller.py`)
-Successfully implemented coordinated motion system with natural-looking movement:
+Successfully implemented sophisticated parametric motion system with natural S-curve acceleration:
 
 #### Motion Philosophy
-Simple, coordinated X/Y movement that looks natural. X motion provides base timing while Y creates lifting behavior partway through the motion.
+Parametric coordinated X/Y movement with independent timing control. Y movement speed determines overall timing to ensure consistent visual effect regardless of distance.
 
 #### Movement Architecture
-**Coordinated Motion Sequence:**
-1. **X Motion**: Constant velocity movement from start to target position
-2. **Y Timing**: Stays flat for first 25% of motion, lifts during next 37.5%, descends during final 37.5%
-3. **Repeat Letter Handling**: Special tap motion (Y-only lift and drop) for consecutive identical letters
+**Parametric Motion Sequence:**
+1. **Y-Speed Controlled Timing**: Total movement time determined by Y travel distance and speed limit
+2. **X Delayed Start**: X begins movement at configurable fraction of total time (default 5%)
+3. **X Early Completion**: X reaches target and holds at configurable fraction (default 80%)
+4. **Y Continuous Arc**: Y completes full lift/drop sequence with smooth curves
+5. **Drop Effect**: Tail drops down onto target after X movement completes
 
 #### Technical Implementation Details
-- **Time-Based Interpolation**: 30Hz position updates for smooth motion (configurable `STEP_RATE`)
-- **Coordinated Timing**: Y motion carefully timed to coordinate with X motion duration
-- **Repeat Detection**: Detects same-letter sequences and executes tap motion instead of full movement
-- **Smooth Motion**: High-frequency position updates eliminate jerky motion
-- **Configurable Speed**: Base timing controlled by `X_SPEED` parameter (200 mm/min)
+- **Parametric Curves**: Single parameter `t` (0 to 1) drives both axes with perfect synchronization
+- **S-Curve Acceleration**: Configurable smoothstep function with power control for acceleration steepness
+- **Dynamic Lift Height**: Height scales with X distance (min 3mm, max 8mm, configurable scale factor)
+- **High-Frequency Updates**: 50-80Hz position updates for ultra-smooth motion
+- **Asymmetric Timing**: Configurable lift peak timing for varied movement character
+- **Unified Acceleration**: Both X and Y use identical S-curve profiles for natural feel
 
 #### Motion Parameters
-- **Lift Height**: 4mm above board surface during transitions
-- **Update Rate**: 30Hz for smooth interpolation
-- **Settle Time**: 0.8s pause at each letter for dramatic effect
-- **Inter-Letter Pause**: 0.7s between letters
-- **Tap Motion**: 0.5s Y-only motion for repeated letters
+- **Y Speed Control**: 5-8 mm/s maximum Y speed (determines overall timing)
+- **X Timing**: Start at 5%, finish at 80% of total movement time
+- **S-Curve Power**: 1.5 (configurable steepness: 1.0 = standard, >1 = sharper)
+- **Lift Asymmetry**: 0.6 (peak timing: 0.5 = center, >0.5 = late peak)
+- **Dynamic Heights**: 3-8mm based on X distance with 0.5mm/mm scale factor
+- **Update Rate**: 50-80Hz for smooth interpolation
+- **Safety Constraints**: Y movement limited to positive values only
 
-#### 🎯 NEXT PHASE: Acceleration Curves
-Ready to implement simple acceleration profiles to make motion even more organic:
-- **Ease-in/Ease-out**: S-curve acceleration for more natural starts/stops
-- **Variable Lift Speed**: Different speeds for lift vs. descend phases
-- **Momentum Simulation**: Slight overshoot and correction behavior
+#### Advanced Features
+- **Distance-Based Scaling**: Longer moves automatically get higher lift for visual drama
+- **Tap Motion Enhancement**: Repeated letters use same S-curve system for consistency
+- **Physical Safety**: Y axis constrained to prevent collision with physical obstructions
+- **Timing Flexibility**: Independent control of start/finish timing for varied movement personalities
+
+### ✅ COMPLETED: Attract Mode System (`attract_mode.py`)
+Sophisticated twitch-based movement system for attracting visitor attention:
+
+#### Attract Mode Philosophy
+Creates natural cat-like micro-movements that start and end at home position. Each twitch is a single parametric curve with randomized characteristics for organic behavior.
+
+#### Twitch Movement Architecture
+**Single Parametric Twitches:**
+1. **Home-Based Movement**: Every twitch starts and ends at (0,0) home position
+2. **Random Peak Selection**: Each twitch targets a random peak position within safe boundaries
+3. **Variable Timing**: Peak occurs at randomized time (30-70% of movement duration)
+4. **Dynamic Acceleration**: Each twitch uses different S-curve steepness for varied character
+5. **Safe Threading**: Clean start/stop with guaranteed return to home position
+
+#### Technical Implementation
+- **Parametric Curves**: Same system as message spelling but with 0→peak→0 profile
+- **Randomized Parameters**: Peak position, timing, speed, and acceleration vary per twitch
+- **Safety Constraints**: X range ±6mm, Y range 2-5mm (positive only for physical safety)
+- **Thread-Safe Control**: Non-blocking start/stop with clean exit at movement completion
+- **High Update Rate**: 80Hz for smooth micro-movements
+
+#### Attract Mode Parameters
+- **X Movement**: ±6mm from home position
+- **Y Movement**: 2-5mm positive only (physical obstruction prevention)
+- **Speed Range**: 3-8 mm/s variable per twitch
+- **Timing Asymmetry**: 30-70% peak timing for varied movement character
+- **S-Curve Range**: 0.8-2.0 steepness for acceleration variety
+- **Inter-Twitch Pause**: 0.5-3.0 seconds random intervals
 
 ### Message Database (`responses.json`)
-Mood-based response system with natural progression:
+Response system with categorized messages for varied interactions:
 - **Welcoming**: Initial friendly greetings ("HELLO", "GREETINGS", "WELCOME")
 - **Cryptic**: Mysterious oracle responses ("PERHAPS", "WHO KNOWS", "UNCLEAR")
 - **Sleepy**: Tired, dismissive messages ("DROWSY", "LATER", "QUIET")
 - **Dismissive**: Direct dismissal for overstayers ("GO AWAY", "ENOUGH", "BEGONE")
 
-#### Planned Behavior System
-- **Mood Progression**: Automatic escalation based on interaction duration
-- **Response Selection**: Randomized within mood categories
-- **Timing Thresholds**: Configurable delays between mood transitions
-- **Presence Correlation**: Ultrasonic sensor triggers mood state changes
+#### Message Selection Strategy
+- **Random Selection**: Messages chosen randomly from database with anti-repetition tracking
+- **Simplified Approach**: No complex mood progression - focuses on core interactive experience
+- **Extensible Design**: Database structure supports future mood system if desired
 
 ## Technical Achievements
 
@@ -197,10 +230,45 @@ The system is now ready for art installation deployment:
 - Interactive trigger system via ultrasonic sensor
 - Power and mounting for tail mechanism
 
+### 🔄 NEXT PHASE: Main Controller Integration
+With all core systems completed, the final step is creating the main controller that orchestrates the complete interactive experience.
+
+#### Planned System Architecture
+**Main Control Loop (`main_controller.py`):**
+```
+Monitor Sensor → Detect Presence → Start Attract Mode → Confirm Presence → 
+Stop Attract Mode → Return Home → Select Message → Spell Message → 
+Pause → Return to Monitor
+```
+
+#### Implementation Roadmap
+1. **Phase 1: Basic Integration** (Critical - 1-2 days)
+   - Create main controller with sensor monitoring loop
+   - Implement presence detection with debouncing
+   - Basic attract mode → message spelling pipeline
+   - Test complete sensor → attract → spell → repeat cycle
+
+2. **Phase 2: Message Management** (Important - 1 day)
+   - Random message selection from response database
+   - Anti-repetition tracking to avoid immediate repeats
+   - Configurable timing between interactions
+
+3. **Phase 3: Robustness** (Polish - 1 day)
+   - Error handling and recovery for installation environment
+   - Logging system for debugging
+   - Auto-start service configuration for autonomous operation
+
+#### Control Flow Design
+- **Presence Detection**: 5-second confirmation before triggering message
+- **Attract Mode**: Continuous twitching while presence detected
+- **Message Spelling**: Full return to home, spell message, pause
+- **Anti-Repetition**: Track last 3-5 messages to ensure variety
+- **Safe Transitions**: All mode changes occur at home position
+
 ## Raspberry Pi Deployment
 
-### 🔄 NEXT PHASE: Pi Integration
-The project is ready for deployment on Raspberry Pi hardware. All core systems have been developed and tested, with the ultrasonic sensor integration providing interactive capabilities.
+### ✅ READY FOR DEPLOYMENT
+The project is now ready for deployment on Raspberry Pi hardware. All core systems have been developed and tested, with only the main controller integration remaining.
 
 ### Hardware Requirements
 - **Raspberry Pi 4** (recommended) or Pi 3B+
@@ -243,15 +311,17 @@ Raspberry Pi
 ## Files & Documentation
 
 ### Core Production Files
+- `tail_speller.py` - **COMPLETED**: Advanced parametric motion system with S-curve acceleration
+- `attract_mode.py` - **COMPLETED**: Sophisticated twitch-based attract mode system
 - `calibrate_ouija_letters.py` - Interactive X,Y letter position calibration tool
 - `test_ouija_letters.py` - Letter positioning test and validation system  
 - `smooth_tail_puppeteer.py` - Advanced real-time control for development/testing
-- `tail_speller.py` - **COMPLETED**: Coordinated motion message spelling system
-- `fluidnc/` - Complete FluidNC streaming library
-- `sensors/hc_sr04.py` - HC-SR04 ultrasonic sensor module with raw readings
+- `fluidnc/` - Complete FluidNC streaming library with robust error handling
+- `sensors/hc_sr04.py` - HC-SR04 ultrasonic sensor module with thread-safe operation
 - `test_ultrasonic.py` - Ultrasonic sensor validation and testing script
-- `responses.json` - Mood-based message database
-- `ouija_letter_positions.json` - Calibrated letter coordinate database (simplified format)
+- `responses.json` - Categorized message database with anti-repetition support
+- `ouija_letter_positions.json` - Calibrated letter coordinate database
+- `main_controller.py` - **TO BE IMPLEMENTED**: Central orchestration system
 
 ### Reference Documentation  
 - `PROJECT_DESCRIPTION.md` - This document
